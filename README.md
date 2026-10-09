@@ -5,6 +5,11 @@
 > 基于麦当劳中国 MCP 的纯 Python 点餐前体检器 —— 在你点"提交订单"之前，
 > 用你自己的真实数据算清三笔账：**这单吃了多少、你是不是又在重复、那张券为什么没用上。**
 
+[![CI](https://github.com/yhyxzl/mcd-chill/actions/workflows/ci.yml/badge.svg)](https://github.com/yhyxzl/mcd-chill/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.10%2B-3776AB)
+![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 ---
 
 ![麦麦冷静期分享卡片](docs/demo-card.png)
@@ -194,12 +199,38 @@ mcd-chill/
 │   └── cli.py          # 命令行入口与终端渲染
 ├── scripts/
 │   └── probe.py        # 联调探针：把只读 Tool 的真实响应落盘，便于校准解析
+├── tests/
+│   └── test_mcd_chill.py   # 29 项单元测试，纯函数、不联网、不需 Token
 ├── docs/
 │   └── demo-card.png   # README 里那张卡片的源图
+├── .github/workflows/ci.yml
 ├── SKILL.md            # WorkBuddy Skill 定义
 ├── MCP_INTEGRATION.md  # MCP 集成说明与联调发现
 └── mcp-config.example.json
 ```
+
+---
+
+## 测试
+
+单元测试覆盖了解析器、账本、判决引擎和卡片渲染，**全部离线运行、不需要 Token**：
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+```
+Ran 29 tests in 0.017s
+
+OK
+```
+
+其中几条是针对联调踩过的坑写的回归测试：
+
+- `test_extract_from_nested_mcp_result` —— 防止再从 `content[0].text` 取到说明文字
+- `test_replacement_stays_in_same_group` —— 防止再出现「巨无霸 → 炸鸡翅」的跨品类建议
+- `test_cold_start_without_history_is_honest` —— 无历史订单时必须如实说明，不能编造复购次数
+- `test_html_is_self_contained_and_masked` —— 卡片不得引入外部资源，且必须完成门店脱敏
 
 ---
 

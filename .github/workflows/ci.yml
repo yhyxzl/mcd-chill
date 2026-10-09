@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: 单元测试 (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: 检查是否引入第三方依赖
+        run: |
+          if [ -f requirements.txt ]; then
+            echo "发现 requirements.txt，本项目应当零依赖" >&2
+            cat requirements.txt >&2
+            exit 1
+          fi
+          echo "零依赖检查通过"
+
+      - name: 语法检查
+        run: python -m compileall -q src scripts tests
+
+      - name: 运行单元测试
+        run: python -m unittest discover -s tests -v
+
+      - name: 命令行自检（不需要 Token）
+        run: |
+          python src/cli.py --help
+          python src/cli.py verdict --help
+
+  smoketest:
+    name: 无 Token 时的降级行为
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 未设置 MCD_MCP_TOKEN 时应给出可读报错
+        run: |
+          set +e
+          output=$(python src/cli.py ledger 2>&1)
+          status=$?
+          set -e
+          echo "$output"
+          if [ "$status" -eq 0 ]; then
+            echo "预期失败但成功退出" >&2
+            exit 1
+          fi
+          echo "$output" | grep -q "MCD_MCP_TOKEN" \
+            || { echo "错误信息里应提示缺少 MCD_MCP_TOKEN" >&2; exit 1; }
