@@ -1,0 +1,29 @@
+# 凭据
+.env
+.env.*
+!.env.example
+mcp-config.json
+*.token
+
+# 联调产物（含真实账号数据，切勿提交）
+probe_out/
+*.probe.json
+
+# 生成的分享卡片
+out/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
